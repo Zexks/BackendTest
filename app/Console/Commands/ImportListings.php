@@ -39,8 +39,6 @@ class ImportListings extends Command
     public function handle()
     {
         $filename = 'Listings.xml';
-        $pics = array();
-        $xml = XmlParser::load($filename);
         $simplexml = simplexml_load_file($filename);
 
         foreach($simplexml->post as $key => $value) {
