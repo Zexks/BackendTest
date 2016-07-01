@@ -38,66 +38,65 @@ class ImportListings extends Command
      */
     public function handle()
     {
-        $filename = 'listings.xml';
+        $filename = 'Listings.xml';
         $pics = array();
         $xml = XmlParser::load($filename);
+        $simplexml = simplexml_load_file($filename);
 
-        foreach($xml.getChildren() as $key => $listing) {
-          $listing->parse([
-            $proptype = listing::PropertyType;
-            $cat = listing::ListingCategory;
-            $mls = listing::MlsId;
+        foreach($simplexml->post as $key => $value) {
+          $listing = simplexml_load_string($value->listing);
 
-            if (!PropType::where('code', '=', $proptype)->count() > 0) {
-              DB::table('proptype')->insert([
-                'code' => $proptype,
-                'description' => listing::PropertyType
-              ]);
-            }
+          $proptype = $listing->PropertyType;
+          $cat = $listing->ListingCategory;
+          $mls = $listing->MlsId;
 
-            if (!Category::where('code', '=', $cat)->count() > 0) {
-              DB::table('proptype')->insert([
-                'code' => $proptype,
-                'description' => listing::PropertyType
-              ]);
-            }
-
-            if (!MLS::where('code', '=', $mls)->count() > 0) {
-              DB::table('mls')->insert([
-                'code' => $mls,
-                'Description' => listing::MlsName
-              ]);
-            }
-
-            DB::table('listing')->insert([
-              'street' => $listing::FullStreetAddress,
-              'city' => $listing::City,
-              'state' => $listing::StateOrProvince,
-              'zip' => $listing::PostalCode,
-              'country' => $listing::Country,
-              'price' => $listing::ListingURL,
-              'bed' => $listing::Bedrooms,
-              'bath' => $listing::Bathrooms,
-              'proptype' => DB::select('proptype')->where('code', '=', $proptype)->pluck('id'),
-              'key' => $listing::ListingKey,
-              'category' => DB::select('category')->where('code', '=', $cat)->pluck('id'),
-              'status' => $listing::ListingStatus,
-              'description' => $listing::ListingDescription,
-              'mlsid' => DB::select('mls')->where('code', '=', $mls)->pluck('id'),
-              'mlsnum' => $listing::MlsNumber
+          if (!PropType::where('code', '=', $proptype)->count() > 0) {
+            DB::table('proptype')->insert([
+              'code' => $proptype,
+              'description' => $proptype
             ]);
+          }
 
-            $pics = $listing::Photos;
+          if (!Category::where('code', '=', $cat)->count() > 0) {
+            DB::table('proptype')->insert([
+              'code' => $cat,
+              'description' => $listing->$cat,
+            ]);
+          }
 
-            foreach($pics as $pic) {
-              $picture->parse([
-                DB::table('photos')->insert([
-                  'timestamp' => $picture::MediaModificationTimestamp,
-                  'url' => $picture::MediaURL
-                ]);
-              ]);
-            }
+          if (!MLS::where('code', '=', $mls)->count() > 0) {
+            DB::table('mls')->insert([
+              'code' => $mls,
+              'Description' => $listing->MlsName,
+            ]);
+          }
+
+          DB::table('listing')->insert([
+            'street' => $listing->FullStreetAddress,
+            'city' => $listing->City,
+            'state' => $listing->StateOrProvince,
+            'zip' => $listing->PostalCode,
+            'country' => $listing->Country,
+            'price' => $listing->ListingURL,
+            'bed' => $listing->Bedrooms,
+            'bath' => $listing->Bathrooms,
+            'proptype' => DB::select('proptype')->where('code', '=', $proptype)->pluck('id'),
+            'key' => $listing->ListingKey,
+            'category' => DB::select('category')->where('code', '=', $cat)->pluck('id'),
+            'status' => $listing->ListingStatus,
+            'description' => $listing->ListingDescription,
+            'mlsid' => DB::select('mls')->where('code', '=', $mls)->pluck('id'),
+            'mlsnum' => $listing->MlsNumber,
           ]);
+
+          $pics = simplexml_load_string($listing->Photos);
+
+          foreach($pics as $pic) {
+            DB::table('photos')->insert([
+              'timestamp' => $pic::MediaModificationTimestamp,
+              'url' => $pic::MediaURL,
+            ]);
+          }
         }
     }
 }
