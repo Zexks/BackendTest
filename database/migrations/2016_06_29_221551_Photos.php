@@ -11,12 +11,12 @@ class Photos extends Migration
      * @return void
      */
     public function up() {
-        Schema::create('photos', function (Blueprint $table) {
-            $table->increments('id');
-            $table->integer('listing_id');
-            $table->string('photo');
-            $table->datetime('timestamp');
-        });
+      Schema::create('photos', function (Blueprint $table) {
+          $table->increments('id');
+          $table->integer('listing_id');
+          $table->string('photo');
+          $table->datetime('timestamp');
+      });
     }
 
     /**

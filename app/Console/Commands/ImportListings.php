@@ -93,6 +93,7 @@ class ImportListings extends Command
 
           foreach($pics as $pic) {
             DB::table('photos')->insert([
+              'listing_id' => DB::table('listings')->where('street', $listing->FullStreetAddress)->value('id'),
               'timestamp' => $pic::MediaModificationTimestamp,
               'url' => $pic::MediaURL,
             ]);
