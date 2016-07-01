@@ -40,27 +40,63 @@ class ImportListings extends Command
     {
         $filename = 'listings.xml';
         $pics = array();
-        $listing = array();
         $xml = XmlParser::load($filename);
 
         foreach($xml.getChildren() as $key => $listing) {
-          $item = $listing->parse([
-            'FullStreetAddress' => ['uses' => 'product::FullStreetAddress'],
-            'City' => ['uses' => 'product::City'],
-            'StateOrProvince' => ['uses' => 'product::StateOrProvince'],
-            'PostalCode' => ['uses' => 'product::PostalCode'],
-            'Country' => ['uses' => 'product::Country'],
-            'ListPrice' => ['uses' => 'product::ListingURL'],
-            'Bedrooms' => ['uses' => 'product::Bedrooms'],
-            'Bathrooms' => ['uses' => 'product::Bathrooms'],
-            'PropertyType' => ['uses' => 'product::PropertyType'],
-            'ListingKey' => ['uses' => 'product::ListingKey'],
-            'ListingCategory' => ['uses' => 'product::ListingCategory'],
-            'ListingStatus' => ['uses' => 'product::ListingStatus'],
-            'ListingDescription' => ['uses' => 'product::ListingDescription'],
-            'MlsId' => ['uses' => 'product::MlsId'],
-            'MlsName' => ['uses' => 'product::MlsName'],
-            'MlsNumber' => ['uses' => 'product::MlsNumber'],
+          $listing->parse([
+            $proptype = listing::PropertyType;
+            $cat = listing::ListingCategory;
+            $mls = listing::MlsId;
+
+            if (!PropType::where('code', '=', $proptype)->count() > 0) {
+              DB::table('proptype')->insert([
+                'code' => $proptype,
+                'description' => listing::PropertyType
+              ]);
+            }
+
+            if (!Category::where('code', '=', $cat)->count() > 0) {
+              DB::table('proptype')->insert([
+                'code' => $proptype,
+                'description' => listing::PropertyType
+              ]);
+            }
+
+            if (!MLS::where('code', '=', $mls)->count() > 0) {
+              DB::table('mls')->insert([
+                'code' => $mls,
+                'Description' => listing::MlsName
+              ]);
+            }
+
+            DB::table('listing')->insert([
+              'street' => $listing::FullStreetAddress,
+              'city' => $listing::City,
+              'state' => $listing::StateOrProvince,
+              'zip' => $listing::PostalCode,
+              'country' => $listing::Country,
+              'price' => $listing::ListingURL,
+              'bed' => $listing::Bedrooms,
+              'bath' => $listing::Bathrooms,
+              'proptype' => DB::select('proptype')->where('code', '=', $proptype)->pluck('id'),
+              'key' => $listing::ListingKey,
+              'category' => DB::select('category')->where('code', '=', $cat)->pluck('id'),
+              'status' => $listing::ListingStatus,
+              'description' => $listing::ListingDescription,
+              'mlsid' => DB::select('mls')->where('code', '=', $mls)->pluck('id'),
+              'mlsnum' => $listing::MlsNumber
+            ]);
+
+            $pics = $listing::Photos;
+
+            foreach($pics as $pic) {
+              $picture->parse([
+                DB::table('photos')->insert([
+                  'timestamp' => $picture::MediaModificationTimestamp,
+                  'url' => $picture::MediaURL
+                ]);
+              ]);
+            }
           ]);
         }
     }
