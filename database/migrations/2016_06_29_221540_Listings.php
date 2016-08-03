@@ -23,15 +23,14 @@ class Listings extends Migration
              $table->string('url');
              $table->integer('bed');
              $table->integer('bath');
-             $table->string('propertytype');
-             $table->string('listingkey');
-             $table->string('listingcategory');
-             $table->string('listingstatus');
-             $table->boolean('discloseaddress');
-             $table->string('listingdescription');
+             $table->string('key');
+             $table->string('status');
+             $table->boolean('disclose');
+             $table->string('description');
              $table->string('mlsid');
-             $table->string('mlsname');
              $table->integer('mlsnumber');
+             $table->string('proptypeid');
+             $table->string('categoryid');
          });
     }
 

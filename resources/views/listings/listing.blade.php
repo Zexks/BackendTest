@@ -8,7 +8,7 @@
 <h1>Available Properties</h1>
   <ul>
   @foreach($listings as $listing)
-    <li>{{ Html::linkRoute('viewListing', $listing->street . ', ' . $listing->city . ', ' . $listing->state . ' ' . $listing->zip, array($listing->url)) }}</li>
+    <li>{{ Html::link($listing->url, $listing->mlsnumber) }}</li>
   @endforeach
 </ul>
 @stop

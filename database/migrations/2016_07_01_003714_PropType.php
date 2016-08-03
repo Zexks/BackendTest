@@ -11,7 +11,7 @@ class PropType extends Migration
      * @return void
      */
     public function up() {
-      Schema::create('proptype', function (Blueprint $table) {
+      Schema::create('proptypes', function (Blueprint $table) {
           $table->increments('id');
           $table->integer('code');
           $table->string('description');
@@ -25,6 +25,6 @@ class PropType extends Migration
      */
     public function down()
     {
-        Schema::drop('proptype');
+        Schema::drop('proptypes');
     }
 }

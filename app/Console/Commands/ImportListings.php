@@ -2,7 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Category;
+use App\Models\Listing;
+use App\Models\MLS;
+use App\Models\Photo;
+use App\Models\PropType;
 use XmlParser;
+use Log;
+use DB;
 use Illuminate\Console\Command;
 
 class ImportListings extends Command
@@ -12,7 +19,7 @@ class ImportListings extends Command
      *
      * @var string
      */
-    protected $signature = 'command:ImportListings';
+    protected $signature = 'import:listings';
 
     /**
      * The console command description.
@@ -38,64 +45,74 @@ class ImportListings extends Command
      */
     public function handle()
     {
-        $filename = 'Listings.xml';
-        $simplexml = simplexml_load_file($filename);
+      $filename = public_path().'\\listings.xml';
+      $simplexml = simplexml_load_file($filename);
 
-        foreach($simplexml->post as $key => $value) {
-          $listing = simplexml_load_string($value->listing);
+      foreach($simplexml->Listing as $listing) {
+        $namespaces = $listing->Address->getNameSpaces(true);
 
-          $proptype = $listing->PropertyType;
-          $cat = $listing->ListingCategory;
-          $mls = $listing->MlsId;
+        $proptype = $listing->PropertyType;
+        Log::info('PropType check: '.$proptype);
+        if (!PropType::where('description', $proptype)->count() > 0) {
+          DB::table('proptypes')->insert([
+            'code' => (DB::table('proptypes')->max('code') + 1),
+            'description' => $proptype
+          ]);
+        }
 
-          if (!PropType::where('code', '=', $proptype)->count() > 0) {
-            DB::table('proptype')->insert([
-              'code' => $proptype,
-              'description' => $proptype
-            ]);
-          }
+        $category = $listing->ListingCategory;
+        Log::info('Category check: '.$category);
+        if (!Category::where('description', $category)->count() > 0) {
+          DB::table('categories')->insert([
+            'code' => (DB::table('categories')->max('code') + 1),
+            'description' => $category
+          ]);
+        }
 
-          if (!Category::where('code', '=', $cat)->count() > 0) {
-            DB::table('proptype')->insert([
-              'code' => $cat,
-              'description' => $listing->$cat,
-            ]);
-          }
+        $mlsnum = $listing->MlsNumber;
+        $mlsid = $listing->MlsId;
+        Log::info('MLS check: '.$mlsid);
+        if (!MLS::where('code', $mlsid)->count() > 0) {
+          DB::table('mls')->insert([
+            'code' => $mlsid,
+            'name' => $listing->MlsName,
+          ]);
+        }
 
-          if (!MLS::where('code', '=', $mls)->count() > 0) {
-            DB::table('mls')->insert([
-              'code' => $mls,
-              'Description' => $listing->MlsName,
-            ]);
-          }
-
-          DB::table('listing')->insert([
-            'street' => $listing->FullStreetAddress,
-            'city' => $listing->City,
-            'state' => $listing->StateOrProvince,
-            'zip' => $listing->PostalCode,
-            'country' => $listing->Country,
-            'price' => $listing->ListingURL,
+        $street = $listing->Address->children($namespaces['commons'])->FullStreetAddress;
+        Log::info('Inserting Listing: '.$street);
+        if (!Listing::where('street', $street)->count() > 0) {
+          DB::table('listings')->insert([
+            'street' => $street,
+            'city' => $listing->Address->children($namespaces['commons'])->City,
+            'state' => $listing->Address->children($namespaces['commons'])->StateOrProvince,
+            'zip' => $listing->Address->children($namespaces['commons'])->PostalCode,
+            'country' => $listing->Address->children($namespaces['commons'])->Country,
+            'price' => $listing->ListPrice,
+            'url' => $listing->ListingURL,
             'bed' => $listing->Bedrooms,
             'bath' => $listing->Bathrooms,
-            'proptype' => DB::select('proptype')->where('code', '=', $proptype)->pluck('id'),
             'key' => $listing->ListingKey,
-            'category' => DB::select('category')->where('code', '=', $cat)->pluck('id'),
             'status' => $listing->ListingStatus,
             'description' => $listing->ListingDescription,
-            'mlsid' => DB::select('mls')->where('code', '=', $mls)->pluck('id'),
-            'mlsnum' => $listing->MlsNumber,
+            'mlsnumber' => $mlsnum,
+            'mlsid' => MLS::where('code', $mlsid)->pluck('id')[0],
+            'categoryid' => Category::where('description', $category)->pluck('id')[0],
+            'proptypeid' => PropType::where('description', $proptype)->pluck('id')[0]
           ]);
+        }
 
-          $pics = simplexml_load_string($listing->Photos);
-
-          foreach($pics as $pic) {
+        $ttlpic = $listing->Photos->children()->count();
+        Log::info('Inserting pictures: '.$ttlpic);
+        if($ttlpic > 0) {
+          foreach($listing->Photos->children() as $pic) {
             DB::table('photos')->insert([
-              'listing_id' => DB::table('listings')->where('street', $listing->FullStreetAddress)->value('id'),
-              'timestamp' => $pic::MediaModificationTimestamp,
-              'url' => $pic::MediaURL,
+              'listing_id' => Listing::where('street', $street)->pluck('id')[0],
+              'timestamp' => $pic->MediaModificationTimestamp,
+              'url' => $pic->MediaURL,
             ]);
           }
         }
+      }
     }
 }

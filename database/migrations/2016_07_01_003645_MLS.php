@@ -13,8 +13,8 @@ class MLS extends Migration
     public function up() {
       Schema::create('mls', function (Blueprint $table) {
           $table->increments('id');
-          $table->integer('code');
-          $table->string('description');
+          $table->string('code');
+          $table->string('name');
       });
     }
 

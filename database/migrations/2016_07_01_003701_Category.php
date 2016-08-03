@@ -11,7 +11,7 @@ class Category extends Migration
      * @return void
      */
     public function up() {
-      Schema::create('category', function (Blueprint $table) {
+      Schema::create('categories', function (Blueprint $table) {
           $table->increments('id');
           $table->integer('code');
           $table->string('description');
@@ -25,6 +25,6 @@ class Category extends Migration
      */
     public function down()
     {
-        Schema::drop('category');
+        Schema::drop('categories');
     }
 }

@@ -16,6 +16,7 @@ class Photos extends Migration
           $table->integer('listing_id');
           $table->string('photo');
           $table->datetime('timestamp');
+          $table->string('url');
       });
     }
 
@@ -26,6 +27,6 @@ class Photos extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('photos');
     }
 }
